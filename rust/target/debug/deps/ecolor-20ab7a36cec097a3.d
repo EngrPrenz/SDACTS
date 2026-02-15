@@ -1,0 +1,11 @@
+C:\Users\Prince\Documents\code\sdacts\rust\target\debug\deps\ecolor-20ab7a36cec097a3.d: C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\lib.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\color32.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\hsva_gamma.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\hsva.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\rgba.rs
+
+C:\Users\Prince\Documents\code\sdacts\rust\target\debug\deps\libecolor-20ab7a36cec097a3.rlib: C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\lib.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\color32.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\hsva_gamma.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\hsva.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\rgba.rs
+
+C:\Users\Prince\Documents\code\sdacts\rust\target\debug\deps\libecolor-20ab7a36cec097a3.rmeta: C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\lib.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\color32.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\hsva_gamma.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\hsva.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\rgba.rs
+
+C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\lib.rs:
+C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\color32.rs:
+C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\hsva_gamma.rs:
+C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\hsva.rs:
+C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\ecolor-0.23.0\src\rgba.rs:

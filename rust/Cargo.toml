@@ -1,0 +1,23 @@
+[package]
+name = "rust_gui_products"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# GUI
+eframe = "0.23"
+egui = "0.23"
+winapi = { version = "0.3", features = ["winuser"] }
+
+# Async runtime for SQL Server
+tokio = { version = "1", features = ["full"] }
+
+# SQL Server driver
+tiberius = { version = "0.8", features = ["sql-browser-tokio"] }
+
+# Async utilities
+tokio-util = "0.7"
+futures = "0.3"
+
+# Load .env for credentials
+dotenv = "0.15"
