@@ -1,0 +1,25 @@
+# Gemfile
+# Lists all Ruby libraries (gems) needed by this project.
+
+source "https://rubygems.org"
+
+# Web framework (routes, server)
+gem "sinatra"
+
+# Adds dev helpers like automatic reloading
+gem "sinatra-contrib"
+
+# Template engine helpers (ERB views)
+gem "tilt"
+gem "erb"
+
+# SQL Server driver + DB toolkit
+gem "tiny_tds"
+gem "sequel"
+
+# Password hashing for login system
+gem "bcrypt"
+
+# Required in newer Sinatra versions to run a server
+gem "rackup"
+gem "puma"
