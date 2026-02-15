@@ -1,0 +1,14 @@
+C:\Users\Prince\Documents\GitHub\SD-JAVARUBYSQL\rust\target\release\deps\serde-2f2f2d46e9f7aa73.d: C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs C:\Users\Prince\Documents\GitHub\SD-JAVARUBYSQL\rust\target\release\build\serde-6d9d99ac9a4013dc\out/private.rs
+
+C:\Users\Prince\Documents\GitHub\SD-JAVARUBYSQL\rust\target\release\deps\libserde-2f2f2d46e9f7aa73.rlib: C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs C:\Users\Prince\Documents\GitHub\SD-JAVARUBYSQL\rust\target\release\build\serde-6d9d99ac9a4013dc\out/private.rs
+
+C:\Users\Prince\Documents\GitHub\SD-JAVARUBYSQL\rust\target\release\deps\libserde-2f2f2d46e9f7aa73.rmeta: C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs C:\Users\Prince\Documents\GitHub\SD-JAVARUBYSQL\rust\target\release\build\serde-6d9d99ac9a4013dc\out/private.rs
+
+C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs:
+C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs:
+C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs:
+C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs:
+C:\Users\Prince\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs:
+C:\Users\Prince\Documents\GitHub\SD-JAVARUBYSQL\rust\target\release\build\serde-6d9d99ac9a4013dc\out/private.rs:
+
+# env-dep:OUT_DIR=C:\\Users\\Prince\\Documents\\GitHub\\SD-JAVARUBYSQL\\rust\\target\\release\\build\\serde-6d9d99ac9a4013dc\\out
