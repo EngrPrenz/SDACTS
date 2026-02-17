@@ -1,0 +1,37 @@
+<h2>Products</h2>
+
+<form method="get" action="/products" class="box" style="width:800px;">
+  <label>Search by name</label>
+  <input name="q" value="<%= @q %>" placeholder="type product name..." />
+  <button type="submit">Search</button>
+  <a href="/products">Clear</a>
+</form>
+
+<p>
+  <a href="/products/new">+ Add New Product</a>
+</p>
+
+<table>
+  <tr>
+    <th>ID</th>
+    <th>Name</th>
+    <th>Price</th>
+    <th>Qty</th>
+    <th>Actions</th>
+  </tr>
+  <% @products.each do |p| %>
+    <tr>
+      <td><%= p[:id] %></td>
+      <td><%= p[:name] %></td>
+      <td><%= sprintf("%.2f", p[:price]) %></td>
+      <td><%= p[:qty] %></td>
+      <td>
+        <a href="/products/<%= p[:id] %>/edit">Edit</a>
+        |
+        <form class="inline" method="post" action="/products/<%= p[:id] %>/delete" onsubmit="return confirm('Delete this product?')">
+          <button type="submit">Delete</button>
+        </form>
+      </td>
+    </tr>
+  <% end %>
+</table>
