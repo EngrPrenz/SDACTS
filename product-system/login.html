@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login – Product Management System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .login-wrapper { width: 100%; max-width: 380px; padding: 20px; }
+
+        .login-box {
+            background: #fff;
+            border: 2px solid #000;
+            padding: 40px 32px;
+        }
+
+        .login-box h1 {
+            font-size: 20px;
+            font-weight: bold;
+            color: #000;
+            border-bottom: 2px solid #000;
+            padding-bottom: 12px;
+            margin-bottom: 28px;
+            text-align: center;
+        }
+
+        .login-box h1 span {
+            display: block;
+            font-size: 12px;
+            font-weight: normal;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .field { margin-bottom: 16px; }
+
+        .field label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #000;
+            font-size: 14px;
+            background: #fff;
+            color: #000;
+            outline: none;
+        }
+
+        .field input:focus { border: 2px solid #000; }
+
+        .btn-submit {
+            width: 100%;
+            padding: 11px;
+            background: #000;
+            color: #fff;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-submit:hover { background: #333; }
+
+        .error-msg {
+            background: #000;
+            color: #fff;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+        }
+
+        .footer-note a {
+            color: #000;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .footer-note a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="login-wrapper">
+    <div class="login-box">
+        <h1>
+            Product Management System
+            <span>Sign in to continue</span>
+        </h1>
+
+        <!-- Show error if CGI passes ?error=1 -->
+        <script>
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('error') === '1') {
+                document.write('<div class="error-msg">Invalid username or password.</div>');
+            }
+            if (params.get('error') === '2') {
+                document.write('<div class="error-msg">Session expired. Please sign in again.</div>');
+            }
+            if (params.get('registered') === '1') {
+                document.write('<div style="background:#fff;color:#000;border:2px solid #000;padding:10px 12px;font-size:13px;font-weight:bold;margin-bottom:16px;text-align:center;">Account created! Sign in below.</div>');
+            }
+        </script>
+
+        <form method="post" action="/cgi-bin/login.cgi">
+            <div class="field">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username"
+                       placeholder="Enter username" autocomplete="username" required>
+            </div>
+
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password"
+                       placeholder="Enter password" autocomplete="current-password" required>
+            </div>
+
+            <button type="submit" class="btn-submit">SIGN IN</button>
+        </form>
+
+        <p class="footer-note">
+            Don't have an account? <a href="/product-system/register.html">Register</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>
