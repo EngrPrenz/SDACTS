@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login – Product Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 380px;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: #fff;
+            border: 2px solid #000;
+            padding: 40px 32px;
+        }
+
+        .login-box h1 {
+            font-size: 20px;
+            font-weight: bold;
+            color: #000;
+            border-bottom: 2px solid #000;
+            padding-bottom: 12px;
+            margin-bottom: 28px;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        .login-box h1 span {
+            display: block;
+            font-size: 12px;
+            font-weight: normal;
+            color: #666;
+            margin-top: 4px;
+            letter-spacing: 0;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #000;
+            font-size: 14px;
+            background: #fff;
+            color: #000;
+            outline: none;
+        }
+
+        .field input:focus {
+            border: 2px solid #000;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 11px;
+            background: #000;
+            color: #fff;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-login:hover {
+            background: #333;
+        }
+
+        .btn-login:disabled {
+            background: #888;
+            cursor: not-allowed;
+        }
+
+        .error-msg {
+            background: #000;
+            color: #fff;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 16px;
+            display: none;
+            text-align: center;
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 11px;
+            color: #999;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-wrapper">
+    <div class="login-box">
+        <h1>
+            Product Management System
+            <span>Sign in to continue</span>
+        </h1>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <form id="loginForm">
+            <div class="field">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username"
+                       placeholder="Enter username" autocomplete="username" required>
+            </div>
+
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password"
+                       placeholder="Enter password" autocomplete="current-password" required>
+            </div>
+
+            <button type="submit" class="btn-login" id="loginBtn">SIGN IN</button>
+        </form>
+
+        <p class="footer-note">Don't have an account? <a href="/register" style="color:#000;font-weight:bold;text-decoration:none;">Register</a></p>
+    </div>
+</div>
+
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const btn      = document.getElementById('loginBtn');
+        const errorMsg = document.getElementById('errorMsg');
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        btn.disabled    = true;
+        btn.textContent = 'SIGNING IN...';
+        errorMsg.style.display = 'none';
+
+        try {
+            const res = await fetch('/api/login', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ username, password })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                window.location.href = '/';
+            } else {
+                errorMsg.textContent    = data.error || 'Invalid username or password.';
+                errorMsg.style.display  = 'block';
+                btn.disabled            = false;
+                btn.textContent         = 'SIGN IN';
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
+            }
+        } catch (err) {
+            errorMsg.textContent   = 'Connection error. Is the server running?';
+            errorMsg.style.display = 'block';
+            btn.disabled           = false;
+            btn.textContent        = 'SIGN IN';
+        }
+    });
+</script>
+
+</body>
+</html>
