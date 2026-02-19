@@ -1,0 +1,7 @@
+Start-Service SQLBrowser
+Set-Service SQLBrowser -StartupType Automatic
+
+
+cd java
+java -jar target\JavaCRUDSystem-1.0-SNAPSHOT.jar
+
