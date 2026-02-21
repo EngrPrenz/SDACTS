@@ -3,7 +3,7 @@ module product-management-system
 go 1.24.0
 
 require (
-	github.com/alexbrainman/odbc v0.0.0-20211220213544-9c9a2e61c5e2
+	github.com/alexbrainman/odbc v0.0.0-20250601004241-49e6b2bc0cf0
 	golang.org/x/crypto v0.48.0
 )
 

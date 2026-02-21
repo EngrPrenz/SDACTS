@@ -7,8 +7,10 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 const config = {
+    connectionString: "Driver={ODBC Driver 17 for SQL Server};Server=ACER-NITROV15-F\\SQLEXPRESS;Database=SampleDB;Trusted_Connection=yes;",
     server: "localhost\\SQLEXPRESS",
     database: "SampleDB",
+    driver: 'msnodesqlv8',
     options: { trustedConnection: true }
 };
 

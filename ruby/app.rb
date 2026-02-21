@@ -41,7 +41,7 @@ set :views, File.join(File.dirname(__FILE__), "views")
 # -------------------------
 DB_NAME = "MultiLang_Ruby_DB"          # DB name in SSMS
 DB_USER = "sa"                         # SQL login username
-DB_PASS = "YourNewStrongPassword123!"  # <-- CHANGE THIS to your sa password
+DB_PASS = "admin123"  # <-- CHANGE THIS to your sa password
 
 # Create a DB connection using Sequel + TinyTDS
 DB = Sequel.connect(

@@ -104,7 +104,7 @@ var db *sql.DB
 
 func main() {
 	var err error
-	connString := "Driver={SQL Server};Server=XEVO\\SQLEXPRESS01;Database=ProductDB;Trusted_Connection=Yes;"
+	connString := "Driver={SQL Server};Server=ACER-NITROV15-F\\SQLEXPRESS;Database=ProductDB;Trusted_Connection=Yes;"
 
 	fmt.Println("Connecting to SQL Server via ODBC...")
 	db, err = sql.Open("odbc", connString)
