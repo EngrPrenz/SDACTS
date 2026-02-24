@@ -16,14 +16,21 @@ my $dbh = DBI->connect($dsn, '', '', { RaiseError => 0, AutoCommit => 1 });
 # ✅ IMPORTANT: change this to a LONG random secret string
 my $COOKIE_SECRET = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET";
 
-my $username = $cgi->param('username') // '';
-my $password = $cgi->param('password') // '';
-
 sub redirect_to {
     my ($url) = @_;
     print $cgi->header(-location => $url, -status => '302 Found');
     exit;
 }
+
+# If DB failed, show a clear error
+unless ($dbh) {
+    print $cgi->header('text/plain');
+    print "Database connection failed.\n";
+    exit;
+}
+
+my $username = $cgi->param('username') // '';
+my $password = $cgi->param('password') // '';
 
 unless ($username && $password) {
     redirect_to('/product-system/login.html?error=1');
@@ -38,7 +45,19 @@ unless ($user) {
     redirect_to('/product-system/login.html?error=1');
 }
 
-my $ok = eval { bcrypt_check($password, $user->{Password}) };
+my $stored = $user->{Password} // '';
+
+# ✅ Support BOTH bcrypt hashes and plaintext (for your current admin=1234 row)
+my $ok = 0;
+
+if ($stored =~ /^\$2[aby]\$\d\d\$/) {
+    # bcrypt hash
+    $ok = eval { bcrypt_check($password, $stored) } ? 1 : 0;
+} else {
+    # plaintext fallback (temporary / for demo)
+    $ok = ($password eq $stored) ? 1 : 0;
+}
+
 unless ($ok) {
     redirect_to('/product-system/login.html?error=1');
 }
