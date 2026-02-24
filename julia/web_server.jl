@@ -1,47 +1,20 @@
 # Web Server for Product Management System
-# With Login / Register / Session Authentication
+# Configured for SampleDB with Users (Id, Username, Password) and Products (Id, Name, Price)
+# NOTE: Passwords stored as plain text to match your existing Users table schema
 
 using HTTP
 using JSON3
 using ODBC
-using SHA   # password hashing  →  Pkg.add("SHA")
 
 # =============================================================================
 # DATABASE CONNECTION
 # =============================================================================
-const SERVER   = "XEVO\\SQLEXPRESS01"
-const DATABASE = "ProductDB"
+const SERVER   = "ACER-NITROV15-F\\SQLEXPRESS"
+const DATABASE = "SampleDB"
 
 function get_connection()
     conn_str = "Driver={ODBC Driver 17 for SQL Server};Server=$SERVER;Database=$DATABASE;Trusted_Connection=yes;"
     return ODBC.Connection(conn_str)
-end
-
-# =============================================================================
-# DATABASE SETUP  –  creates users table if it doesn't exist
-# =============================================================================
-function setup_users_table()
-    conn = get_connection()
-    ODBC.DBInterface.execute(conn, """
-        IF NOT EXISTS (
-            SELECT * FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'users'
-        )
-        CREATE TABLE users (
-            id            INT IDENTITY(1,1) PRIMARY KEY,
-            username      NVARCHAR(100) NOT NULL UNIQUE,
-            password_hash NVARCHAR(255) NOT NULL,
-            created_at    DATETIME DEFAULT GETDATE()
-        )
-    """)
-    println("✓ Users table ready.")
-end
-
-# =============================================================================
-# PASSWORD HASHING  (SHA-256)
-# =============================================================================
-function hash_password(password::String)
-    return bytes2hex(sha256(password))
 end
 
 # =============================================================================
@@ -88,41 +61,41 @@ end
 
 # =============================================================================
 # USER AUTH API
+# NOTE: Passwords are stored and compared as plain text to match your existing
+#       Users table. Do NOT add hashing unless you migrate all existing passwords.
 # =============================================================================
 function api_register(req::HTTP.Request)
     body     = JSON3.read(String(req.body))
-    username = String(strip(String(get(body, :username, ""))))   # must be plain String for ODBC
+    username = String(strip(String(get(body, :username, ""))))
     password = String(get(body, :password, ""))
 
     length(username) < 3 && return json_resp(400, Dict("success"=>false,"error"=>"Username must be at least 3 characters."))
     length(password) < 4 && return json_resp(400, Dict("success"=>false,"error"=>"Password must be at least 4 characters."))
+    length(username) > 50 && return json_resp(400, Dict("success"=>false,"error"=>"Username must be 50 characters or fewer."))
 
-    conn      = get_connection()
-    cursor    = ODBC.DBInterface.execute(conn,
-        "SELECT id FROM users WHERE username = ?", [username])
-    found     = !isempty(cursor)
-    found && return json_resp(409, Dict("success"=>false,"error"=>"Username already taken."))
+    conn   = get_connection()
+    cursor = ODBC.DBInterface.execute(conn,
+        "SELECT Id FROM Users WHERE Username = ?", [username])
+    !isempty(cursor) && return json_resp(409, Dict("success"=>false,"error"=>"Username already taken."))
 
-    pw_hash = String(hash_password(password))
     ODBC.DBInterface.execute(conn,
-        "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-        [username, pw_hash])
+        "INSERT INTO Users (Username, Password) VALUES (?, ?)",
+        [username, password])
 
     return json_resp(200, Dict("success"=>true))
 end
 
 function api_login(req::HTTP.Request)
     body     = JSON3.read(String(req.body))
-    username = String(strip(String(get(body, :username, ""))))   # must be plain String for ODBC
+    username = String(strip(String(get(body, :username, ""))))
     password = String(get(body, :password, ""))
 
     conn   = get_connection()
     cursor = ODBC.DBInterface.execute(conn,
-        "SELECT password_hash FROM users WHERE username = ?", [username])
+        "SELECT Password FROM Users WHERE Username = ?", [username])
     rows   = collect(cursor)
 
-    pw_hash = String(hash_password(password))
-    if isempty(rows) || String(rows[1][1]) != pw_hash
+    if isempty(rows) || String(rows[1][1]) != password
         return json_resp(401, Dict("success"=>false,"error"=>"Invalid username or password."))
     end
 
@@ -141,23 +114,21 @@ function api_logout(req::HTTP.Request)
 end
 
 # =============================================================================
-# PRODUCT DB FUNCTIONS  (no DataFrame — reads cursor rows directly)
+# PRODUCT DB FUNCTIONS
+# Table: Products (Id INT, Name NVARCHAR(100), Price DECIMAL(10,2))
 # =============================================================================
 
-# Safely convert any value coming from SQL Server (handles Missing, Int32, etc.)
 safe_int(v)    = ismissing(v) ? 0   : Int(v)
 safe_float(v)  = ismissing(v) ? 0.0 : Float64(v)
 safe_string(v) = ismissing(v) ? ""  : string(v)
 
-# Read ODBC cursor rows directly into an array of Dicts — no DataFrame needed
 function cursor_to_array(cursor)
     result = Dict{String,Any}[]
     for row in cursor
         push!(result, Dict(
-            "id"       => safe_int(row[1]),
-            "name"     => safe_string(row[2]),
-            "price"    => safe_float(row[3]),
-            "quantity" => safe_int(row[4])
+            "id"    => safe_int(row[1]),
+            "name"  => safe_string(row[2]),
+            "price" => safe_float(row[3])
         ))
     end
     return result
@@ -165,34 +136,35 @@ end
 
 function get_all_products()
     conn   = get_connection()
-    cursor = ODBC.DBInterface.execute(conn, "SELECT id, name, price, quantity FROM products ORDER BY id")
+    cursor = ODBC.DBInterface.execute(conn,
+        "SELECT Id, Name, Price FROM Products ORDER BY Id")
     return cursor_to_array(cursor)
 end
 
-function add_product_db(name, price, quantity)
+function add_product_db(name, price)
     conn = get_connection()
     ODBC.DBInterface.execute(conn,
-        "INSERT INTO products (name, price, quantity) VALUES (?, ?, ?)",
-        [name, Float64(price), Int(quantity)])
+        "INSERT INTO Products (Name, Price) VALUES (?, ?)",
+        [name, Float64(price)])
 end
 
-function update_product_db(id, name, price, quantity)
+function update_product_db(id, name, price)
     conn = get_connection()
     ODBC.DBInterface.execute(conn,
-        "UPDATE products SET name=?, price=?, quantity=? WHERE id=?",
-        [name, Float64(price), Int(quantity), Int(id)])
+        "UPDATE Products SET Name=?, Price=? WHERE Id=?",
+        [name, Float64(price), Int(id)])
 end
 
 function delete_product_db(id)
     conn = get_connection()
     ODBC.DBInterface.execute(conn,
-        "DELETE FROM products WHERE id=?", [Int(id)])
+        "DELETE FROM Products WHERE Id=?", [Int(id)])
 end
 
 function search_products_db(term)
     conn   = get_connection()
     cursor = ODBC.DBInterface.execute(conn,
-        "SELECT id, name, price, quantity FROM products WHERE name LIKE ? ORDER BY id",
+        "SELECT Id, Name, Price FROM Products WHERE Name LIKE ? ORDER BY Id",
         ["%$(term)%"])
     return cursor_to_array(cursor)
 end
@@ -275,13 +247,13 @@ function handle_request(req::HTTP.Request)
 
         if target == "/api/products/add" && method == "POST"
             b = JSON3.read(String(req.body))
-            add_product_db(b.name, b.price, b.quantity)
+            add_product_db(b.name, b.price)
             return json_resp(200, Dict("success"=>true))
         end
 
         if target == "/api/products/update" && method == "POST"
             b = JSON3.read(String(req.body))
-            update_product_db(b.id, b.name, b.price, b.quantity)
+            update_product_db(b.id, b.name, b.price)
             return json_resp(200, Dict("success"=>true))
         end
 
@@ -304,10 +276,8 @@ end
 # =============================================================================
 function start_server(port=8080)
     println("=" ^ 60)
-    println("   PRODUCT MANAGEMENT SYSTEM  –  with Auth")
+    println("   PRODUCT MANAGEMENT SYSTEM  –  SampleDB")
     println("=" ^ 60)
-    println("\n🔧 Setting up users table...")
-    setup_users_table()
     println("\n🚀 Server → http://localhost:$port")
     println("\n📋 Routes:")
     println("   GET  /login                  Login page")
@@ -318,9 +288,9 @@ function start_server(port=8080)
     println("   GET  /                       Main app  (auth required)")
     println("   GET  /api/products           All products")
     println("   GET  /api/products/search?q= Search")
-    println("   POST /api/products/add       Add product")
-    println("   POST /api/products/update    Update product")
-    println("   POST /api/products/delete    Delete product")
+    println("   POST /api/products/add       Add product  { name, price }")
+    println("   POST /api/products/update    Update product  { id, name, price }")
+    println("   POST /api/products/delete    Delete product  { id }")
     println("\n⏹  Ctrl+C to stop")
     println("=" ^ 60 * "\n")
 

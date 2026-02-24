@@ -1,0 +1,15 @@
+CREATE DATABASE SampleDB;
+GO
+USE SampleDB;
+
+CREATE TABLE Users (
+    Id INT IDENTITY PRIMARY KEY,
+    Username NVARCHAR(50) UNIQUE,
+    Password NVARCHAR(255)
+);
+
+CREATE TABLE Products (
+    Id INT IDENTITY PRIMARY KEY,
+    Name NVARCHAR(100),
+    Price DECIMAL(10,2)
+);

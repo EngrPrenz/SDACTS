@@ -3,7 +3,6 @@
 async function apiFetch(url, options = {}) {
     const res = await fetch(url, options);
     if (res.status === 401) {
-        // Session expired or not logged in → redirect to login
         window.location.href = '/login';
         return null;
     }
@@ -29,18 +28,16 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('addForm').addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        const name     = document.getElementById('productName').value.trim();
-        const price    = parseFloat(document.getElementById('productPrice').value);
-        const quantity = parseInt(document.getElementById('productQuantity').value);
+        const name  = document.getElementById('productName').value.trim();
+        const price = parseFloat(document.getElementById('productPrice').value);
 
         if (!name) { showMessage('Product name is required', 'error'); return; }
-        if (isNaN(price)    || price    < 0) { showMessage('Enter a valid price',    'error'); return; }
-        if (isNaN(quantity) || quantity < 0) { showMessage('Enter a valid quantity', 'error'); return; }
+        if (isNaN(price) || price < 0) { showMessage('Enter a valid price', 'error'); return; }
 
         const res = await apiFetch('/api/products/add', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ name, price, quantity })
+            body:    JSON.stringify({ name, price })
         });
         if (!res) return;
 
@@ -58,19 +55,17 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('editProductForm').addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        const id       = parseInt(document.getElementById('editProductId').value);
-        const name     = document.getElementById('editProductName').value.trim();
-        const price    = parseFloat(document.getElementById('editProductPrice').value);
-        const quantity = parseInt(document.getElementById('editProductQuantity').value);
+        const id    = parseInt(document.getElementById('editProductId').value);
+        const name  = document.getElementById('editProductName').value.trim();
+        const price = parseFloat(document.getElementById('editProductPrice').value);
 
         if (!name) { showMessage('Product name is required', 'error'); return; }
-        if (isNaN(price)    || price    < 0) { showMessage('Enter a valid price',    'error'); return; }
-        if (isNaN(quantity) || quantity < 0) { showMessage('Enter a valid quantity', 'error'); return; }
+        if (isNaN(price) || price < 0) { showMessage('Enter a valid price', 'error'); return; }
 
         const res = await apiFetch('/api/products/update', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ id, name, price, quantity })
+            body:    JSON.stringify({ id, name, price })
         });
         if (!res) return;
 
@@ -123,24 +118,21 @@ function displayProducts(products) {
     const tbody = document.getElementById('productsTable');
 
     if (!products || products.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;">No products available</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;">No products available</td></tr>';
         return;
     }
 
     tbody.innerHTML = products.map(p => {
-        const totalValue = (p.price * p.quantity).toFixed(2);
-        const safeName   = p.name.replace(/'/g, "\\'");
+        const safeName = p.name.replace(/'/g, "\\'");
         return `
             <tr>
                 <td>${p.id}</td>
                 <td>${p.name}</td>
                 <td>$${parseFloat(p.price).toFixed(2)}</td>
-                <td>${p.quantity}</td>
-                <td>$${totalValue}</td>
                 <td>
                     <div class="actions">
                         <button class="btn-edit"
-                            onclick="openEditModal(${p.id}, '${safeName}', ${p.price}, ${p.quantity})">
+                            onclick="openEditModal(${p.id}, '${safeName}', ${p.price})">
                             Edit
                         </button>
                         <button class="btn-delete"
@@ -155,23 +147,16 @@ function displayProducts(products) {
 }
 
 function updateStats(products) {
-    if (!products) products = [];
-    const totalValue    = products.reduce((sum, p) => sum + (parseFloat(p.price) * parseInt(p.quantity)), 0);
-    const totalQuantity = products.reduce((sum, p) => sum + parseInt(p.quantity), 0);
-
-    document.getElementById('totalProducts').textContent = products.length;
-    document.getElementById('totalValue').textContent    = '$' + totalValue.toFixed(2);
-    document.getElementById('totalQuantity').textContent = totalQuantity;
+    document.getElementById('totalProducts').textContent = products ? products.length : 0;
 }
 
 // ── Edit Modal ────────────────────────────────────────────────────────────────
 
-function openEditModal(id, name, price, quantity) {
-    document.getElementById('editProductId').value       = id;
-    document.getElementById('editProductName').value     = name;
-    document.getElementById('editProductPrice').value    = price;
-    document.getElementById('editProductQuantity').value = quantity;
-    document.getElementById('editModal').style.display   = 'block';
+function openEditModal(id, name, price) {
+    document.getElementById('editProductId').value     = id;
+    document.getElementById('editProductName').value   = name;
+    document.getElementById('editProductPrice').value  = price;
+    document.getElementById('editModal').style.display = 'block';
 }
 
 function closeEditModal() {
