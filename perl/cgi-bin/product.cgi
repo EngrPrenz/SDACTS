@@ -4,11 +4,12 @@ use warnings;
 use CGI;
 use CGI::Cookie;
 use DBI;
+use Digest::SHA qw(sha256_hex);
 
 my $cgi    = CGI->new;
 my $action = $cgi->param('action') || 'view_all';
 
-my $dsn = "DBI:ODBC:Driver={SQL Server};Server=XEVO\\SQLEXPRESS01;Database=ProductDB;Trusted_Connection=Yes;";
+my $dsn = "DBI:ODBC:Driver={SQL Server};Server=ACER-NITROV15-F\\SQLEXPRESS;Database=ProductDB;Trusted_Connection=Yes;";
 my $dbh = DBI->connect($dsn, '', '', { RaiseError => 1, AutoCommit => 1 })
     or do {
         print $cgi->header('text/html');
@@ -17,20 +18,35 @@ my $dbh = DBI->connect($dsn, '', '', { RaiseError => 1, AutoCommit => 1 })
     };
 
 # ── Session check ──────────────────────────────────────────────────────────────
+# Signed cookie session: username|expires_epoch|sha256sig
+my $COOKIE_SECRET = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET";
+
 my %cookies = CGI::Cookie->fetch;
 unless ($cookies{pms_session}) {
     print $cgi->header(-status => '302 Found', -location => '/product-system/login.html?error=2');
     exit;
 }
-my $token = $cookies{pms_session}->value;
-my $sess  = $dbh->prepare("SELECT username FROM sessions WHERE token = ? AND expires_at > GETDATE()");
-$sess->execute($token);
-my $sess_row = $sess->fetchrow_hashref;
-unless ($sess_row) {
+
+my $raw = $cookies{pms_session}->value // '';
+my ($u, $exp, $sig) = split(/\|/, $raw, 3);
+
+unless ($u && $exp && $sig) {
     print $cgi->header(-status => '302 Found', -location => '/product-system/login.html?error=2');
     exit;
 }
-my $logged_in_user = $sess_row->{username};
+
+if ($exp !~ /^\d+$/ || $exp <= time()) {
+    print $cgi->header(-status => '302 Found', -location => '/product-system/login.html?error=2');
+    exit;
+}
+
+my $expected = sha256_hex($u . "|" . $exp . "|" . $COOKIE_SECRET);
+unless ($sig eq $expected) {
+    print $cgi->header(-status => '302 Found', -location => '/product-system/login.html?error=2');
+    exit;
+}
+
+my $logged_in_user = $u;
 
 # ── HTML wrappers ──────────────────────────────────────────────────────────────
 print $cgi->header('text/html; charset=UTF-8');
@@ -80,7 +96,7 @@ sub html_end {
 
 # ── Stats helper ───────────────────────────────────────────────────────────────
 sub render_stats {
-    my $s = $dbh->prepare("SELECT COUNT(*) as cnt, ISNULL(SUM(price * quantity),0) as val FROM products");
+    my $s = $dbh->prepare("SELECT COUNT(*) as cnt, ISNULL(SUM(Price),0) as val FROM [Products]");
     $s->execute();
     my $r = $s->fetchrow_hashref;
     my $total = $r->{cnt}  // 0;
@@ -103,7 +119,6 @@ sub render_add_form {
             <div class="form-row">
                 <input type="text"   name="name"     placeholder="Product Name"  required>
                 <input type="number" name="price"    placeholder="Price" step="0.01" required>
-                <input type="number" name="quantity" placeholder="Quantity"       required>
                 <button type="submit">Add Product</button>
             </div>
         </form>
@@ -144,7 +159,7 @@ sub render_table {
     print qq{
     <table>
         <thead>
-            <tr><th>ID</th><th>Name</th><th>Price</th><th>Quantity</th><th>Total Value</th><th>Actions</th></tr>
+            <tr><th>ID</th><th>Name</th><th>Price</th><th>Actions</th></tr>
         </thead>
         <tbody>
     };
@@ -190,7 +205,7 @@ if ($action eq 'view_all' || $action eq '') {
     render_add_form();
     render_search_form();
 
-    my $sth = $dbh->prepare("SELECT * FROM products ORDER BY id ASC");
+    my $sth = $dbh->prepare("SELECT Id as id, Name as name, Price as price FROM [Products] ORDER BY Id ASC");
     $sth->execute();
     render_table($sth);
     html_end();
@@ -204,7 +219,7 @@ elsif ($action eq 'add') {
 
     eval {
         $dbh->do(
-            "INSERT INTO products (name, price, quantity) VALUES (?, ?, ?)",
+            "INSERT INTO [Products] (Name, Price) VALUES (?, ?)",
             undef, $name, $price, $qty
         );
     };
@@ -234,11 +249,8 @@ elsif ($action eq 'search') {
 
     my $sth;
     # Try numeric ID first
-    if ($keyword =~ /^\d+$/) {
-        $sth = $dbh->prepare("SELECT * FROM products WHERE id = ?");
-        $sth->execute($keyword);
-    } else {
-        $sth = $dbh->prepare("SELECT * FROM products WHERE name LIKE ?");
+    if  {
+        $sth = $dbh->prepare("SELECT Id as id, Name as name, Price as price FROM [Products] WHERE Name LIKE ? ORDER BY Id ASC");
         $sth->execute("%$keyword%");
     }
     render_table($sth);
@@ -248,7 +260,7 @@ elsif ($action eq 'search') {
 # ── Edit form ──────────────────────────────────────────────────────────────────
 elsif ($action eq 'edit_form') {
     my $id  = $cgi->param('id');
-    my $sth = $dbh->prepare("SELECT * FROM products WHERE id = ?");
+    my $sth = $dbh->prepare("UPDATE [Products] SET Name=?, Price=? WHERE Id=?");
     $sth->execute($id);
     my $p = $sth->fetchrow_hashref;
 
@@ -313,7 +325,7 @@ elsif ($action eq 'edit') {
 elsif ($action eq 'delete') {
     my $id = $cgi->param('id');
 
-    my $name_sth = $dbh->prepare("SELECT name FROM products WHERE id=?");
+    my $name_sth = $dbh->prepare("DELETE FROM [Products] WHERE Id=?");
     $name_sth->execute($id);
     my $prod = $name_sth->fetchrow_hashref;
     my $prod_name = $prod ? $prod->{name} : "ID $id";
