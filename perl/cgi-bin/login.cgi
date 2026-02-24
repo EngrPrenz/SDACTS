@@ -9,26 +9,35 @@ use Digest::SHA  qw(sha256_hex);
 
 my $cgi = CGI->new;
 
-my $dsn = "DBI:ODBC:Driver={SQL Server};Server=XEVO\\SQLEXPRESS01;Database=ProductDB;Trusted_Connection=Yes;";
+# ✅ change server if needed
+my $dsn = "DBI:ODBC:Driver={SQL Server};Server=ACER-NITROV15-F\\SQLEXPRESS;Database=SampleDB;Trusted_Connection=Yes;";
 my $dbh = DBI->connect($dsn, '', '', { RaiseError => 0, AutoCommit => 1 });
 
-my $username = $cgi->param('username') // '';
-my $password = $cgi->param('password') // '';
+# ✅ IMPORTANT: change this to a LONG random secret string
+my $COOKIE_SECRET = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET";
 
-# ── Redirect helper ────────────────────────────────────────────────────────────
 sub redirect_to {
     my ($url) = @_;
     print $cgi->header(-location => $url, -status => '302 Found');
     exit;
 }
 
-# ── Validate input ─────────────────────────────────────────────────────────────
+# If DB failed, show a clear error
+unless ($dbh) {
+    print $cgi->header('text/plain');
+    print "Database connection failed.\n";
+    exit;
+}
+
+my $username = $cgi->param('username') // '';
+my $password = $cgi->param('password') // '';
+
 unless ($username && $password) {
     redirect_to('/product-system/login.html?error=1');
 }
 
-# ── Fetch user from DB ─────────────────────────────────────────────────────────
-my $sth = $dbh->prepare("SELECT id, password FROM users WHERE username = ?");
+# Matches your schema
+my $sth = $dbh->prepare("SELECT Id, Password FROM [Users] WHERE Username = ?");
 $sth->execute($username);
 my $user = $sth->fetchrow_hashref;
 
@@ -36,22 +45,29 @@ unless ($user) {
     redirect_to('/product-system/login.html?error=1');
 }
 
-# ── Verify password with bcrypt (same as Go system) ───────────────────────────
-my $ok = eval { bcrypt_check($password, $user->{password}) };
+my $stored = $user->{Password} // '';
+
+# ✅ Support BOTH bcrypt hashes and plaintext (for your current admin=1234 row)
+my $ok = 0;
+
+if ($stored =~ /^\$2[aby]\$\d\d\$/) {
+    # bcrypt hash
+    $ok = eval { bcrypt_check($password, $stored) } ? 1 : 0;
+} else {
+    # plaintext fallback (temporary / for demo)
+    $ok = ($password eq $stored) ? 1 : 0;
+}
+
 unless ($ok) {
     redirect_to('/product-system/login.html?error=1');
 }
 
-# ── Create session token ───────────────────────────────────────────────────────
-my $token = sha256_hex($username . time() . rand());
+# ---- Signed cookie session (no Sessions table needed) ----
+my $expires_epoch = time() + (8 * 60 * 60); # 8 hours
+my $payload = $username . "|" . $expires_epoch;
+my $sig     = sha256_hex($payload . "|" . $COOKIE_SECRET);
+my $token   = $payload . "|" . $sig;
 
-# Store session in DB
-$dbh->do(
-    "INSERT INTO sessions (token, username, expires_at) VALUES (?, ?, DATEADD(HOUR, 8, GETDATE()))",
-    undef, $token, $username
-);
-
-# Set session cookie
 my $cookie = CGI::Cookie->new(
     -name     => 'pms_session',
     -value    => $token,
@@ -61,10 +77,8 @@ my $cookie = CGI::Cookie->new(
 );
 
 print $cgi->header(
-    -type     => 'text/html',
     -status   => '302 Found',
     -location => '/cgi-bin/product.cgi?action=view_all',
-    -cookie   => $cookie,
+    -cookie   => $cookie
 );
-
-$dbh->disconnect;
+exit;
