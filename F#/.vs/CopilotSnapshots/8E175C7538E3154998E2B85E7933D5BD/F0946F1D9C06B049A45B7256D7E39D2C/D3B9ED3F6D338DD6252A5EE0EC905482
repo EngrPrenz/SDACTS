@@ -1,0 +1,225 @@
+﻿open System
+open System.Windows.Forms
+open System.Drawing
+open System.Data
+open Microsoft.Data.SqlClient
+
+let connStr =
+    @"Server=ACER-NITROV15-F\SQLEXPRESS;Database=SampleDB;Trusted_Connection=True;TrustServerCertificate=True"
+
+let withConnection f =
+    use conn = new SqlConnection(connStr)
+    conn.Open()
+    f conn
+
+type Product =
+    { Id: int
+      Name: string
+      Price: decimal }
+
+// ---------- LOGIN ----------
+let checkLogin user pass =
+    withConnection (fun conn ->
+        let sql = """
+            SELECT COUNT(1)
+            FROM Users
+            WHERE Username = @u AND Password = @p
+        """
+        use cmd = new SqlCommand(sql, conn)
+        cmd.Parameters.Add("@u", SqlDbType.NVarChar).Value <- user
+        cmd.Parameters.Add("@p", SqlDbType.NVarChar).Value <- pass
+        let result = cmd.ExecuteScalar() :?> int
+        result = 1
+    )
+
+// ---------- PRODUCTS CRUD ----------
+let addProduct name (price: decimal) =
+    withConnection (fun conn ->
+        let sql = "INSERT INTO Products (Name, Price) VALUES (@n, @p)"
+        use cmd = new SqlCommand(sql, conn)
+        cmd.Parameters.Add("@n", SqlDbType.NVarChar).Value <- name
+        cmd.Parameters.Add("@p", SqlDbType.Decimal).Value <- price
+        cmd.ExecuteNonQuery() |> ignore
+    )
+
+let updateProduct id name (price: decimal) =
+    withConnection (fun conn ->
+        let sql = """
+            UPDATE Products
+            SET Name = @n, Price = @p
+            WHERE Id = @id
+        """
+        use cmd = new SqlCommand(sql, conn)
+        cmd.Parameters.Add("@id", SqlDbType.Int).Value <- id
+        cmd.Parameters.Add("@n", SqlDbType.NVarChar).Value <- name
+        cmd.Parameters.Add("@p", SqlDbType.Decimal).Value <- price
+        cmd.ExecuteNonQuery() |> ignore
+    )
+
+let deleteProduct id =
+    withConnection (fun conn ->
+        let sql = "DELETE FROM Products WHERE Id = @id"
+        use cmd = new SqlCommand(sql, conn)
+        cmd.Parameters.Add("@id", SqlDbType.Int).Value <- id
+        cmd.ExecuteNonQuery() |> ignore
+    )
+
+let getProducts search =
+    withConnection (fun conn ->
+        let sql = """
+            SELECT Id, Name, Price
+            FROM Products
+            WHERE Name LIKE @s
+        """
+        use cmd = new SqlCommand(sql, conn)
+        cmd.Parameters.Add("@s", SqlDbType.NVarChar).Value <- "%" + search + "%"
+        use reader = cmd.ExecuteReader()
+        [
+            while reader.Read() do
+                yield {
+                    Id    = reader.GetInt32 0
+                    Name  = reader.GetString 1
+                    Price = reader.GetDecimal 2
+                }
+        ]
+    )
+
+// ================= LOGIN FORM =================
+
+let showLogin () =
+    let form = new Form(Text = "Login", Width = 350, Height = 220,
+                        StartPosition = FormStartPosition.CenterScreen)
+
+    let txtUser = new TextBox(Left = 120, Top = 30, Width = 170)
+    let txtPass = new TextBox(Left = 120, Top = 70, Width = 170, PasswordChar = '*')
+    let btnLogin = new Button(Text = "Login", Left = 120, Top = 115)
+
+    let mutable authenticated = false
+
+    btnLogin.Click.Add(fun _ ->
+        if checkLogin txtUser.Text txtPass.Text then
+            authenticated <- true
+            form.Close()
+        else
+            MessageBox.Show("Invalid login") |> ignore
+    )
+
+    form.Controls.AddRange
+        [| Label(Text = "Username:", Left = 20, Top = 30) :> Control
+           txtUser :> Control
+           Label(Text = "Password:", Left = 20, Top = 70) :> Control
+           txtPass :> Control
+           btnLogin :> Control |]
+
+    form.ShowDialog() |> ignore
+    authenticated
+
+// ================= MAIN APP =================
+
+let runMainApp () =
+    let form = new Form(Text = "Products CRUD",
+                        Width = 650, Height = 550,
+                        StartPosition = FormStartPosition.CenterScreen)
+
+    let txtName  = new TextBox(Left = 120, Top = 20, Width = 200)
+    let txtPrice = new TextBox(Left = 120, Top = 55, Width = 200)
+
+    let btnAdd    = new Button(Text = "Add",    Left = 10,  Top = 95)
+    let btnUpdate = new Button(Text = "Update", Left = 110, Top = 95, Enabled = false)
+    let btnDelete = new Button(Text = "Delete", Left = 210, Top = 95, Enabled = false)
+
+    let txtSearch  = new TextBox(Left = 10,  Top = 140, Width = 300)
+    let btnSearch  = new Button(Text = "Search",  Left = 320, Top = 138)
+    let btnRefresh = new Button(Text = "Refresh", Left = 420, Top = 138)
+
+    let grid = new DataGridView(
+        Left = 10, Top = 180,
+        Width = 610, Height = 300,
+        ReadOnly = true,
+        SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+        AutoGenerateColumns = true,
+        MultiSelect = false,
+        RowHeadersVisible = false
+    )
+    grid.AutoSizeColumnsMode <- DataGridViewAutoSizeColumnsMode.Fill
+
+    let mutable selectedId = -1
+
+    let clearInputs () =
+        txtName.Clear()
+        txtPrice.Clear()
+        selectedId <- -1
+        btnUpdate.Enabled <- false
+        btnDelete.Enabled <- false
+        grid.ClearSelection()
+        grid.CurrentCell <- null
+
+    let refreshGrid term =
+        grid.DataSource <- getProducts term |> List.toArray
+        clearInputs ()
+
+    grid.CellClick.Add(fun e ->
+        if e.RowIndex >= 0 then
+            let row = grid.Rows.[e.RowIndex]
+            selectedId    <- row.Cells.[0].Value :?> int
+            txtName.Text  <- string row.Cells.[1].Value
+            txtPrice.Text <- string row.Cells.[2].Value
+            btnUpdate.Enabled <- true
+            btnDelete.Enabled <- true
+    )
+
+    btnAdd.Click.Add(fun _ ->
+        match Decimal.TryParse(txtPrice.Text) with
+        | true, price ->
+            addProduct txtName.Text price
+            refreshGrid ""
+        | _ ->
+            MessageBox.Show("Please enter a valid price.") |> ignore
+    )
+
+    btnUpdate.Click.Add(fun _ ->
+        if selectedId <> -1 then
+            match Decimal.TryParse(txtPrice.Text) with
+            | true, price ->
+                updateProduct selectedId txtName.Text price
+                refreshGrid ""
+            | _ ->
+                MessageBox.Show("Please enter a valid price.") |> ignore
+    )
+
+    btnDelete.Click.Add(fun _ ->
+        if selectedId <> -1 then
+            let res = MessageBox.Show("Delete this product?", "Confirm", MessageBoxButtons.YesNo)
+            if res = DialogResult.Yes then
+                deleteProduct selectedId
+                refreshGrid ""
+    )
+
+    btnSearch.Click.Add(fun _ ->
+        refreshGrid txtSearch.Text
+        txtSearch.Clear()
+    )
+
+    btnRefresh.Click.Add(fun _ ->
+        refreshGrid ""
+    )
+
+    form.Controls.AddRange
+        [| Label(Text = "Name:",  Left = 10, Top = 20) :> Control
+           txtName :> Control
+           Label(Text = "Price:", Left = 10, Top = 55) :> Control
+           txtPrice :> Control
+           btnAdd :> Control; btnUpdate :> Control; btnDelete :> Control
+           txtSearch :> Control; btnSearch :> Control; btnRefresh :> Control
+           grid :> Control |]
+
+    refreshGrid ""
+    Application.Run(form)
+
+// ================= ENTRY =================
+
+[<EntryPoint>]
+let main _ =
+    Application.EnableVisualStyles()
+    if showLogin() then runMainApp()
+    0
