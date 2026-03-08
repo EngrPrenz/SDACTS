@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · AdminDB{% endblock %}
+
+{% block content %}
+<div class="welcome-banner">
+  <h2>Welcome back, {{ session.get('user') }} 👋</h2>
+  <p>Here's a quick overview of your SampleDB data.</p>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card" style="--accent-color: #4f8ef7;">
+    <div class="stat-label">Total Users</div>
+    <div class="stat-value">{{ user_count }}</div>
+    <div class="stat-icon">👤</div>
+  </div>
+  <div class="stat-card" style="--accent-color: #22c55e;">
+    <div class="stat-label">Total Products</div>
+    <div class="stat-value">{{ prod_count }}</div>
+    <div class="stat-icon">📦</div>
+  </div>
+  <div class="stat-card" style="--accent-color: #f59e0b;">
+    <div class="stat-label">Inventory Value</div>
+    <div class="stat-value">₱{{ "%.2f"|format(total_val) }}</div>
+    <div class="stat-icon">💰</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+  <div class="card" style="padding:24px;">
+    <div style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;">Quick Actions</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <a href="{{ url_for('users') }}" class="btn btn-ghost">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        Manage Users
+      </a>
+      <a href="{{ url_for('products') }}" class="btn btn-ghost">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+        Manage Products
+      </a>
+    </div>
+  </div>
+  <div class="card" style="padding:24px;">
+    <div style="font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;">Database Info</div>
+    <table style="width:100%;">
+      <tr><td style="padding:6px 0;color:var(--muted);font-size:13px;border:none;">Database</td><td style="padding:6px 0;font-size:13px;border:none;font-weight:600;">SampleDB</td></tr>
+      <tr><td style="padding:6px 0;color:var(--muted);font-size:13px;border:none;">Tables</td><td style="padding:6px 0;font-size:13px;border:none;font-weight:600;">Users, Products</td></tr>
+      <tr><td style="padding:6px 0;color:var(--muted);font-size:13px;border:none;">Logged in as</td><td style="padding:6px 0;font-size:13px;border:none;font-weight:600;">{{ session.get('user') }}</td></tr>
+    </table>
+  </div>
+</div>
+{% endblock %}

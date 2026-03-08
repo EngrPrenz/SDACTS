@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login · AdminDB</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">⬡ AdminDB</div>
+    <p class="login-sub">Sign in to your workspace</p>
+
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username"
+               placeholder="Enter your username" required autofocus>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password"
+               placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px;">
+        Sign In &rarr;
+      </button>
+    </form>
+
+    <p style="margin-top:20px;font-size:12px;color:var(--muted);text-align:center;">
+      Default: <strong style="color:var(--text)">admin</strong> / <strong style="color:var(--text)">1234</strong>
+    </p>
+  </div>
+</div>
+</body>
+</html>
