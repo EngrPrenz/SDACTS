@@ -1,0 +1,36 @@
+@model SampleCRUD.Models.User
+@{ ViewData["Title"] = "Add User"; }
+
+<div class="page-header">
+    <div>
+        <h2>➕ Add User</h2>
+        <p class="page-sub">Create a new system user</p>
+    </div>
+    <a asp-action="Index" class="btn-secondary">← Back</a>
+</div>
+
+<div class="card form-card">
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+        <div class="form-group">
+            <label asp-for="Username">Username</label>
+            <input asp-for="Username" class="form-control" placeholder="e.g. johndoe" />
+            <span asp-validation-for="Username" class="field-error"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="Password">Password</label>
+            <input asp-for="Password" class="form-control" type="text" placeholder="Enter password" />
+            <span asp-validation-for="Password" class="field-error"></span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Save User</button>
+            <a asp-action="Index" class="btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts { @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); } }

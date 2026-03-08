@@ -1,0 +1,46 @@
+@model IEnumerable<SampleCRUD.Models.Product>
+@{ ViewData["Title"] = "Products"; }
+
+<div class="page-header">
+    <div>
+        <h2>🛒 Products</h2>
+        <p class="page-sub">Manage your product catalog</p>
+    </div>
+    <a asp-controller="Products" asp-action="Create" class="btn-primary">+ Add Product</a>
+</div>
+
+<div class="card">
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            No products yet. <a asp-action="Create">Add one now →</a>
+        </div>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Product Name</th>
+                    <th>Price</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="id-col">@item.Id</td>
+                        <td><strong>@item.Name</strong></td>
+                        <td class="price-col">&#8369;@item.Price.ToString("N2")</td>
+                        <td>
+                            <a href="/Products/Edit/@item.Id" class="btn-edit">Edit</a>
+                            <a href="/Products/Delete/@item.Id" class="btn-delete">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
