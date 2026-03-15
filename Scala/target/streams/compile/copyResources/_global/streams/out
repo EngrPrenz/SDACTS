@@ -1,0 +1,4 @@
+[0m[[0m[0mdebug[0m] [0m[0mCopy resource mappings: [0m
+[0m[[0m[0mdebug[0m] [0m[0m	(C:\Users\Prince\Documents\GitHub\SDACTS\Scala\src\main\resources\application.conf,C:\Users\Prince\Documents\GitHub\SDACTS\Scala\target\scala-2.13\classes\application.conf)[0m
+[0m[[0m[0mdebug[0m] [0m[0m	(C:\Users\Prince\Documents\GitHub\SDACTS\Scala\src\main\resources\logback.xml,C:\Users\Prince\Documents\GitHub\SDACTS\Scala\target\scala-2.13\classes\logback.xml)[0m
+[0m[[0m[0mdebug[0m] [0m[0m	(C:\Users\Prince\Documents\GitHub\SDACTS\Scala\src\main\resources\public\index.html,C:\Users\Prince\Documents\GitHub\SDACTS\Scala\target\scala-2.13\classes\public\index.html)[0m

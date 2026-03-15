@@ -17,10 +17,9 @@ import (
 // ─── Data Models ────────────────────────────────────────────────────────────
 
 type Product struct {
-	ID       int     `json:"id"`
-	Name     string  `json:"name"`
-	Price    float64 `json:"price"`
-	Quantity int     `json:"quantity"`
+	ID    int     `json:"id"`
+	Name  string  `json:"name"`
+	Price float64 `json:"price"`
 }
 
 // ─── Simple In-Memory Session Store ─────────────────────────────────────────
@@ -104,7 +103,7 @@ var db *sql.DB
 
 func main() {
 	var err error
-	connString := "Driver={SQL Server};Server=ACER-NITROV15-F\\SQLEXPRESS;Database=ProductDB;Trusted_Connection=Yes;"
+	connString := "Driver={SQL Server};Server=ACER-NITROV15-F\\SQLEXPRESS;Database=SampleDB;Trusted_Connection=Yes;"
 
 	fmt.Println("Connecting to SQL Server via ODBC...")
 	db, err = sql.Open("odbc", connString)
@@ -117,8 +116,6 @@ func main() {
 		log.Fatal("Error connecting to database: ", err)
 	}
 	fmt.Println("✔ Successfully connected to SQL Server!")
-
-	createTables()
 
 	// ── Static files ──
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
@@ -145,38 +142,9 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func createTables() {
-	// Products table
-	_, err := db.Exec(`
-		IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='products' AND xtype='U')
-		CREATE TABLE products (
-			id       INT PRIMARY KEY IDENTITY(1,1),
-			name     VARCHAR(100) NOT NULL,
-			price    DECIMAL(10,2),
-			quantity INT
-		)`)
-	if err != nil {
-		log.Fatal("Error creating products table: ", err)
-	}
-
-	// Users table
-	_, err = db.Exec(`
-		IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='users' AND xtype='U')
-		CREATE TABLE users (
-			id         INT PRIMARY KEY IDENTITY(1,1),
-			username   VARCHAR(50)  NOT NULL UNIQUE,
-			password   VARCHAR(255) NOT NULL,
-			created_at DATETIME DEFAULT GETDATE()
-		)`)
-	if err != nil {
-		log.Fatal("Error creating users table: ", err)
-	}
-}
-
 // ─── Login Handlers ──────────────────────────────────────────────────────────
 
 func handleLoginPage(w http.ResponseWriter, r *http.Request) {
-	// If already logged in, redirect to dashboard
 	if _, ok := getSession(r); ok {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -202,22 +170,29 @@ func handleLoginAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch hashed password from DB
+	fmt.Printf("[DEBUG] Login attempt — username: %q, password: %q\n", creds.Username, creds.Password)
+
 	var hash string
-	err := db.QueryRow("SELECT password FROM users WHERE username = ?", creds.Username).Scan(&hash)
+	query := fmt.Sprintf("SELECT Password FROM Users WHERE Username = '%s'", creds.Username)
+	err := db.QueryRow(query).Scan(&hash)
 	if err != nil {
-		// Generic message — don't reveal whether user exists
+		fmt.Printf("[DEBUG] DB query error: %v\n", err)
 		json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Invalid username or password"})
 		return
 	}
 
-	// Compare hash
-	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(creds.Password)); err != nil {
+	fmt.Printf("[DEBUG] Password from DB: %q\n", hash)
+	fmt.Printf("[DEBUG] Password from login form: %q\n", creds.Password)
+	fmt.Printf("[DEBUG] Plain-text match: %v\n", hash == creds.Password)
+
+	bcryptErr := bcrypt.CompareHashAndPassword([]byte(hash), []byte(creds.Password))
+	fmt.Printf("[DEBUG] Bcrypt match error: %v\n", bcryptErr)
+
+	if bcryptErr != nil && hash != creds.Password {
 		json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Invalid username or password"})
 		return
 	}
 
-	// Create session cookie
 	token := createSession(creds.Username)
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionCookieName,
@@ -227,6 +202,7 @@ func handleLoginAPI(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   int(sessionDuration.Seconds()),
 	})
 
+	fmt.Printf("[DEBUG] Login success for %q\n", creds.Username)
 	json.NewEncoder(w).Encode(map[string]interface{}{"success": true})
 }
 
@@ -256,7 +232,6 @@ func handleRegisterAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Basic validation
 	if len(creds.Username) < 3 {
 		json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Username must be at least 3 characters"})
 		return
@@ -266,9 +241,9 @@ func handleRegisterAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if username already taken
+	// Check for duplicate username
 	var exists int
-	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", creds.Username).Scan(&exists)
+	err := db.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM Users WHERE Username = '%s'", creds.Username)).Scan(&exists)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Database error"})
 		return
@@ -278,15 +253,14 @@ func handleRegisterAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Hash the password
 	hash, err := bcrypt.GenerateFromPassword([]byte(creds.Password), bcrypt.DefaultCost)
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Error securing password"})
 		return
 	}
 
-	// Insert new user
-	_, err = db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", creds.Username, string(hash))
+	// Insert into SampleDB Users table
+	_, err = db.Exec(fmt.Sprintf("INSERT INTO Users (Username, Password) VALUES ('%s', '%s')", creds.Username, string(hash)))
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Error creating account"})
 		return
@@ -313,7 +287,8 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 // ─── Product Handlers ────────────────────────────────────────────────────────
 
 func handleProducts(w http.ResponseWriter, r *http.Request) {
-	rows, err := db.Query("SELECT id, name, price, quantity FROM products ORDER BY id")
+	// SampleDB Products has: Id, Name, Price (no Quantity)
+	rows, err := db.Query("SELECT Id, Name, Price FROM Products ORDER BY Id")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -323,7 +298,7 @@ func handleProducts(w http.ResponseWriter, r *http.Request) {
 	var products []Product
 	for rows.Next() {
 		var p Product
-		if err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Quantity); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Price); err != nil {
 			continue
 		}
 		products = append(products, p)
@@ -338,8 +313,7 @@ func addProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := db.Exec("INSERT INTO products (name, price, quantity) VALUES (?, ?, ?)",
-		p.Name, p.Price, p.Quantity)
+	_, err := db.Exec(fmt.Sprintf("INSERT INTO Products (Name, Price) VALUES ('%s', %f)", p.Name, p.Price))
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
 		return
@@ -354,8 +328,7 @@ func updateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := db.Exec("UPDATE products SET name = ?, price = ?, quantity = ? WHERE id = ?",
-		p.Name, p.Price, p.Quantity, p.ID)
+	_, err := db.Exec(fmt.Sprintf("UPDATE Products SET Name = '%s', Price = %f WHERE Id = %d", p.Name, p.Price, p.ID))
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
 		return
@@ -372,7 +345,7 @@ func deleteProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := db.Exec("DELETE FROM products WHERE id = ?", data.ID)
+	_, err := db.Exec(fmt.Sprintf("DELETE FROM Products WHERE Id = %d", data.ID))
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
 		return
@@ -386,9 +359,9 @@ func searchProducts(w http.ResponseWriter, r *http.Request) {
 
 	var rows *sql.Rows
 	if err == nil {
-		rows, err = db.Query("SELECT id, name, price, quantity FROM products WHERE id = ?", id)
+		rows, err = db.Query(fmt.Sprintf("SELECT Id, Name, Price FROM Products WHERE Id = %d", id))
 	} else {
-		rows, err = db.Query("SELECT id, name, price, quantity FROM products WHERE name LIKE ?", "%"+searchTerm+"%")
+		rows, err = db.Query(fmt.Sprintf("SELECT Id, Name, Price FROM Products WHERE Name LIKE '%%%s%%'", searchTerm))
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -399,7 +372,7 @@ func searchProducts(w http.ResponseWriter, r *http.Request) {
 	var products []Product
 	for rows.Next() {
 		var p Product
-		if err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Quantity); err != nil {
+		if err := rows.Scan(&p.ID, &p.Name, &p.Price); err != nil {
 			continue
 		}
 		products = append(products, p)

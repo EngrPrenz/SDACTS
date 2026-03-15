@@ -51,7 +51,7 @@
             </div>
             <div class="stat-card">
                 <h3 id="totalValue">$0.00</h3>
-                <p>Total Inventory Value</p>
+                <p>Total Listed Value</p>
             </div>
         </div>
 
@@ -59,9 +59,8 @@
             <h2>Add New Product</h2>
             <form id="addForm">
                 <div class="form-row">
-                    <input type="text"   id="productName"     placeholder="Product Name" required>
-                    <input type="number" id="productPrice"    placeholder="Price"    step="0.01" required>
-                    <input type="number" id="productQuantity" placeholder="Quantity" required>
+                    <input type="text"   id="productName"  placeholder="Product Name" required>
+                    <input type="number" id="productPrice" placeholder="Price" step="0.01" required>
                     <button type="submit">Add Product</button>
                 </div>
             </form>
@@ -77,13 +76,11 @@
                     <th>ID</th>
                     <th>Name</th>
                     <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Total Value</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="productsTable">
-                <tr><td colspan="6" style="text-align: center;">Loading...</td></tr>
+                <tr><td colspan="4" style="text-align: center;">Loading...</td></tr>
             </tbody>
         </table>
     </div>

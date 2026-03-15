@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScalaDB Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a24;
+      --border: #2a2a3a;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --accent3: #43e97b;
+      --text: #e8e8f0;
+      --muted: #6b6b8a;
+      --danger: #ff4757;
+      --warn: #ffa502;
+      --radius: 12px;
+      --font-display: 'Syne', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-display);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── NOISE TEXTURE ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ──────────────────────────────────────────────────
+       LOGIN PAGE
+    ────────────────────────────────────────────────── */
+    #login-page {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    #login-page::after {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(108,99,255,.18) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 56px 48px;
+      width: 420px;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 0 60px rgba(108,99,255,.1), 0 32px 80px rgba(0,0,0,.5);
+      animation: fadeUp .6s ease both;
+    }
+
+    .login-card::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(108,99,255,.4), transparent 60%, rgba(255,101,132,.2));
+      z-index: -1;
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .brand-icon {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 32px rgba(108,99,255,.4);
+    }
+
+    .brand h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+
+    .brand span { color: var(--accent); }
+
+    .brand p {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .form-group { margin-bottom: 20px; }
+
+    label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 8px;
+      font-family: var(--font-mono);
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 13px 16px;
+      color: var(--text);
+      font-family: var(--font-display);
+      font-size: 15px;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(108,99,255,.2);
+    }
+
+    input::placeholder { color: var(--muted); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 24px;
+      border-radius: var(--radius);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 14px;
+      border: none;
+      cursor: pointer;
+      transition: all .2s;
+      letter-spacing: .3px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(108,99,255,.4);
+      width: 100%;
+      justify-content: center;
+      font-size: 15px;
+      padding: 15px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(108,99,255,.5);
+    }
+
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 8px; }
+
+    .btn-edit {
+      background: rgba(108,99,255,.15);
+      color: var(--accent);
+      border: 1px solid rgba(108,99,255,.3);
+    }
+
+    .btn-edit:hover { background: rgba(108,99,255,.25); }
+
+    .btn-delete {
+      background: rgba(255,71,87,.12);
+      color: var(--danger);
+      border: 1px solid rgba(255,71,87,.3);
+    }
+
+    .btn-delete:hover { background: rgba(255,71,87,.22); }
+
+    .btn-success {
+      background: linear-gradient(135deg, var(--accent3), #38d9a9);
+      color: #0a0a0f;
+      box-shadow: 0 4px 16px rgba(67,233,123,.3);
+    }
+
+    .btn-success:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(67,233,123,.4); }
+
+    .btn-cancel {
+      background: var(--surface2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-cancel:hover { color: var(--text); border-color: var(--muted); }
+
+    .login-error {
+      background: rgba(255,71,87,.12);
+      border: 1px solid rgba(255,71,87,.3);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--danger);
+      font-size: 13px;
+      margin-bottom: 20px;
+      display: none;
+      font-family: var(--font-mono);
+    }
+
+    /* ──────────────────────────────────────────────────
+       DASHBOARD
+    ────────────────────────────────────────────────── */
+    #dashboard { display: none; min-height: 100vh; }
+
+    /* TOPBAR */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+    }
+
+    .topbar-brand .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--accent3);
+      box-shadow: 0 0 8px var(--accent3);
+      animation: pulse 2s infinite;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      padding: 6px 16px 6px 6px;
+    }
+
+    .user-avatar {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .user-name { font-size: 13px; font-weight: 600; }
+
+    .btn-logout {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: var(--font-display);
+      font-weight: 600;
+      transition: all .2s;
+    }
+
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 20px 32px 0;
+    }
+
+    .tab {
+      padding: 10px 24px;
+      border-radius: var(--radius) var(--radius) 0 0;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: .5px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      transition: all .2s;
+      color: var(--muted);
+      background: transparent;
+      position: relative;
+    }
+
+    .tab.active {
+      background: var(--surface);
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px; left: 0; right: 0;
+      height: 1px;
+      background: var(--surface);
+    }
+
+    .tab:hover:not(.active) { color: var(--text); }
+
+    /* CONTENT */
+    .content {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0 var(--radius) var(--radius) var(--radius);
+      margin: 0 32px 32px;
+      padding: 32px;
+      min-height: 500px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeIn .3s ease; }
+
+    /* SECTION HEADER */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .section-subtitle {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* TABLE */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead { background: var(--surface2); }
+
+    th {
+      padding: 14px 20px;
+      text-align: left;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(42,42,58,.5);
+      vertical-align: middle;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr:hover td { background: rgba(108,99,255,.04); }
+
+    .id-badge {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 8px;
+      color: var(--muted);
+    }
+
+    .price-badge {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--accent3);
+    }
+
+    .actions { display: flex; gap: 8px; }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.7);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px;
+      width: 460px;
+      max-width: 95vw;
+      position: relative;
+      animation: fadeUp .3s ease both;
+      box-shadow: 0 32px 80px rgba(0,0,0,.6);
+    }
+
+    .modal::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(108,99,255,.3), transparent 60%);
+      z-index: -1;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 24px;
+      letter-spacing: -0.5px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .modal-actions .btn { flex: 1; justify-content: center; }
+
+    /* TOAST */
+    #toast-container {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      min-width: 280px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+      animation: slideIn .3s ease;
+    }
+
+    .toast.success { border-left: 3px solid var(--accent3); }
+    .toast.error   { border-left: 3px solid var(--danger); }
+
+    .toast-icon { font-size: 18px; }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: .5; }
+
+    .empty-state p { font-family: var(--font-mono); font-size: 13px; }
+
+    /* LOADING */
+    .loader {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    /* STATS */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .stat-card .stat-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-card .stat-value {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+
+    .stat-card.accent .stat-value  { color: var(--accent); }
+    .stat-card.green  .stat-value  { color: var(--accent3); }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 8px var(--accent3); }
+      50%       { box-shadow: 0 0 16px var(--accent3); }
+    }
+
+    /* CONFIRM DIALOG */
+    .confirm-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.7);
+      backdrop-filter: blur(4px);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .confirm-overlay.open { display: flex; }
+
+    .confirm-box {
+      background: var(--surface);
+      border: 1px solid rgba(255,71,87,.3);
+      border-radius: 16px;
+      padding: 32px;
+      width: 360px;
+      text-align: center;
+      animation: fadeUp .25s ease both;
+      box-shadow: 0 0 40px rgba(255,71,87,.1), 0 32px 60px rgba(0,0,0,.5);
+    }
+
+    .confirm-box .icon { font-size: 36px; margin-bottom: 12px; }
+    .confirm-box h3 { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+    .confirm-box p  { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+    .confirm-btns   { display: flex; gap: 12px; }
+    .confirm-btns .btn { flex: 1; justify-content: center; }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN ──────────────────────────────────────────────────────────────── -->
+<div id="login-page">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-icon">⬡</div>
+      <h1>Scala<span>DB</span></h1>
+      <p>Management Console</p>
+    </div>
+
+    <div class="login-error" id="login-error"></div>
+
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="login-username" placeholder="Enter username" autocomplete="username" />
+    </div>
+
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password" />
+    </div>
+
+    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">
+      Sign In →
+    </button>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ──────────────────────────────────────────────────────────── -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span>⬡ ScalaDB</span>
+      <div class="dot"></div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-badge">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <span class="user-name" id="user-name">Admin</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('users')">👥 Users</div>
+    <div class="tab" onclick="switchTab('products')">📦 Products</div>
+  </div>
+
+  <div class="content">
+    <!-- USERS TAB -->
+    <div class="tab-panel active" id="tab-users">
+      <div class="stats-row" id="user-stats"></div>
+      <div class="section-header">
+        <div>
+          <div class="section-title">User Management</div>
+          <div class="section-subtitle">CRUD // SampleDB.Users</div>
+        </div>
+        <button class="btn btn-success" onclick="openUserModal()">＋ New User</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              <th>Password Hash</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            <tr><td colspan="4"><div class="loader"><span class="spinner"></span>Loading...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRODUCTS TAB -->
+    <div class="tab-panel" id="tab-products">
+      <div class="stats-row" id="product-stats"></div>
+      <div class="section-header">
+        <div>
+          <div class="section-title">Product Catalogue</div>
+          <div class="section-subtitle">CRUD // SampleDB.Products</div>
+        </div>
+        <button class="btn btn-success" onclick="openProductModal()">＋ New Product</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Price</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="products-tbody">
+            <tr><td colspan="4"><div class="loader"><span class="spinner"></span>Loading...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── USER MODAL ─────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal">
+    <div class="modal-title" id="user-modal-title">New User</div>
+    <input type="hidden" id="user-modal-id" />
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="user-modal-username" placeholder="Enter username" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="user-modal-password" placeholder="Enter password" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeUserModal()">Cancel</button>
+      <button class="btn btn-success" onclick="saveUser()">Save User</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PRODUCT MODAL ──────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="product-modal">
+  <div class="modal">
+    <div class="modal-title" id="product-modal-title">New Product</div>
+    <input type="hidden" id="product-modal-id" />
+    <div class="form-group">
+      <label>Product Name</label>
+      <input type="text" id="product-modal-name" placeholder="Enter product name" />
+    </div>
+    <div class="form-group">
+      <label>Price (USD)</label>
+      <input type="number" id="product-modal-price" placeholder="0.00" step="0.01" min="0" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeProductModal()">Cancel</button>
+      <button class="btn btn-success" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONFIRM ────────────────────────────────────────────────────────────── -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="icon">🗑️</div>
+    <h3>Delete Record</h3>
+    <p id="confirm-msg">This action cannot be undone.</p>
+    <div class="confirm-btns">
+      <button class="btn btn-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-delete" id="confirm-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOASTS ─────────────────────────────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<script>
+  /* ─── CONFIG ─────────────────────────────────────────────────────────────── */
+  const API = '';   // same origin — no prefix needed
+  let TOKEN = '';
+  let CURRENT_USER = '';
+
+  /* ─── AUTH ───────────────────────────────────────────────────────────────── */
+  async function doLogin() {
+    const btn      = document.getElementById('login-btn');
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errEl    = document.getElementById('login-error');
+
+    if (!username || !password) {
+      showLoginError('Please enter username and password.');
+      return;
+    }
+
+    btn.textContent = 'Signing in…';
+    btn.disabled = true;
+    errEl.style.display = 'none';
+
+    try {
+      const res  = await fetch(`${API}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const json = await res.json();
+
+      if (res.ok && json.success) {
+        TOKEN        = json.data.token;
+        CURRENT_USER = json.data.username;
+        document.getElementById('user-name').textContent   = CURRENT_USER;
+        document.getElementById('user-avatar').textContent = CURRENT_USER[0].toUpperCase();
+        document.getElementById('login-page').style.display  = 'none';
+        document.getElementById('dashboard').style.display   = 'block';
+        loadUsers();
+      } else {
+        showLoginError(json.message || 'Login failed.');
+      }
+    } catch (e) {
+      showLoginError('Cannot connect to server. Is it running?');
+    }
+
+    btn.textContent = 'Sign In →';
+    btn.disabled = false;
+  }
+
+  function showLoginError(msg) {
+    const el = document.getElementById('login-error');
+    el.textContent    = msg;
+    el.style.display  = 'block';
+  }
+
+  function doLogout() {
+    TOKEN = '';
+    CURRENT_USER = '';
+    document.getElementById('dashboard').style.display   = 'none';
+    document.getElementById('login-page').style.display  = 'flex';
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+  }
+
+  /* allow Enter key on login */
+  document.getElementById('login-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('login-username').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  /* ─── TABS ───────────────────────────────────────────────────────────────── */
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', ['users','products'][i] === name);
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(`tab-${name}`).classList.add('active');
+    if (name === 'users')    loadUsers();
+    if (name === 'products') loadProducts();
+  }
+
+  /* ─── USERS ──────────────────────────────────────────────────────────────── */
+  async function loadUsers() {
+    const tbody = document.getElementById('users-tbody');
+    tbody.innerHTML = `<tr><td colspan="4"><div class="loader"><span class="spinner"></span>Loading...</div></td></tr>`;
+
+    try {
+      const res  = await apiFetch('/api/users');
+      const data = await res.json();
+
+      if (!res.ok) { tbody.innerHTML = errRow(4, data.message); return; }
+
+      const users = data.data || [];
+      renderUserStats(users);
+
+      if (!users.length) {
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="icon">👤</div><p>No users found</p></div></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td><span class="id-badge">#${u.id}</span></td>
+          <td><strong>${esc(u.username)}</strong></td>
+          <td style="font-family:var(--font-mono);font-size:12px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            ${esc(u.password.startsWith('$2') ? u.password.substring(0,20)+'…' : '••••••')}
+          </td>
+          <td>
+            <div class="actions">
+              <button class="btn btn-sm btn-edit" onclick="editUser(${u.id},'${esc(u.username)}')">✏️ Edit</button>
+              <button class="btn btn-sm btn-delete" onclick="confirmDelete('user',${u.id},'${esc(u.username)}')">🗑️ Delete</button>
+            </div>
+          </td>
+        </tr>`).join('');
+    } catch (e) {
+      tbody.innerHTML = errRow(4, 'Failed to load users.');
+    }
+  }
+
+  function renderUserStats(users) {
+    document.getElementById('user-stats').innerHTML = `
+      <div class="stat-card accent">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value">${users.length}</div>
+      </div>`;
+  }
+
+  function openUserModal(id, username) {
+    document.getElementById('user-modal-id').value        = id || '';
+    document.getElementById('user-modal-username').value  = username || '';
+    document.getElementById('user-modal-password').value  = '';
+    document.getElementById('user-modal-title').textContent = id ? 'Edit User' : 'New User';
+    document.getElementById('user-modal').classList.add('open');
+  }
+
+  function editUser(id, username) { openUserModal(id, username); }
+  function closeUserModal()       { document.getElementById('user-modal').classList.remove('open'); }
+
+  async function saveUser() {
+    const id       = document.getElementById('user-modal-id').value;
+    const username = document.getElementById('user-modal-username').value.trim();
+    const password = document.getElementById('user-modal-password').value;
+
+    if (!username)          { showToast('Username is required.', 'error'); return; }
+    if (!id && !password)   { showToast('Password is required.', 'error'); return; }
+
+    const isEdit   = !!id;
+    const url      = isEdit ? `/api/users/${id}` : '/api/users';
+    const method   = isEdit ? 'PUT' : 'POST';
+    const body     = isEdit
+      ? { username, password: password || '!!KEEP!!_placeholder' }
+      : { username, password };
+
+    /* For edit, if password blank skip it — we send a sentinel that the
+       backend ignores by re-reading only if it's not blank on the backend.
+       For simplicity here we just always send it; the service will hash it. */
+    if (isEdit && !password) {
+      showToast('Enter a new password or keep the current one by typing it.', 'error');
+      return;
+    }
+
+    try {
+      const res  = await apiFetch(url, method, body);
+      const json = await res.json();
+      if (res.ok) {
+        showToast(isEdit ? 'User updated!' : 'User created!', 'success');
+        closeUserModal();
+        loadUsers();
+      } else {
+        showToast(json.message || 'Operation failed.', 'error');
+      }
+    } catch (e) {
+      showToast('Network error.', 'error');
+    }
+  }
+
+  /* ─── PRODUCTS ───────────────────────────────────────────────────────────── */
+  async function loadProducts() {
+    const tbody = document.getElementById('products-tbody');
+    tbody.innerHTML = `<tr><td colspan="4"><div class="loader"><span class="spinner"></span>Loading...</div></td></tr>`;
+
+    try {
+      const res  = await apiFetch('/api/products');
+      const data = await res.json();
+
+      if (!res.ok) { tbody.innerHTML = errRow(4, data.message); return; }
+
+      const products = data.data || [];
+      renderProductStats(products);
+
+      if (!products.length) {
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="icon">📦</div><p>No products found</p></div></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = products.map(p => `
+        <tr>
+          <td><span class="id-badge">#${p.id}</span></td>
+          <td><strong>${esc(p.name)}</strong></td>
+          <td><span class="price-badge">$${Number(p.price).toFixed(2)}</span></td>
+          <td>
+            <div class="actions">
+              <button class="btn btn-sm btn-edit" onclick="editProduct(${p.id},'${esc(p.name)}',${p.price})">✏️ Edit</button>
+              <button class="btn btn-sm btn-delete" onclick="confirmDelete('product',${p.id},'${esc(p.name)}')">🗑️ Delete</button>
+            </div>
+          </td>
+        </tr>`).join('');
+    } catch (e) {
+      tbody.innerHTML = errRow(4, 'Failed to load products.');
+    }
+  }
+
+  function renderProductStats(products) {
+    const total = products.reduce((s, p) => s + Number(p.price), 0);
+    document.getElementById('product-stats').innerHTML = `
+      <div class="stat-card accent">
+        <div class="stat-label">Total Products</div>
+        <div class="stat-value">${products.length}</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Total Value</div>
+        <div class="stat-value" style="font-size:24px">$${total.toFixed(2)}</div>
+      </div>`;
+  }
+
+  function openProductModal(id, name, price) {
+    document.getElementById('product-modal-id').value    = id || '';
+    document.getElementById('product-modal-name').value  = name || '';
+    document.getElementById('product-modal-price').value = price || '';
+    document.getElementById('product-modal-title').textContent = id ? 'Edit Product' : 'New Product';
+    document.getElementById('product-modal').classList.add('open');
+  }
+
+  function editProduct(id, name, price) { openProductModal(id, name, price); }
+  function closeProductModal()          { document.getElementById('product-modal').classList.remove('open'); }
+
+  async function saveProduct() {
+    const id    = document.getElementById('product-modal-id').value;
+    const name  = document.getElementById('product-modal-name').value.trim();
+    const price = parseFloat(document.getElementById('product-modal-price').value);
+
+    if (!name)         { showToast('Product name is required.', 'error'); return; }
+    if (isNaN(price))  { showToast('Price must be a number.', 'error'); return; }
+
+    const isEdit = !!id;
+    const url    = isEdit ? `/api/products/${id}` : '/api/products';
+    const method = isEdit ? 'PUT' : 'POST';
+
+    try {
+      const res  = await apiFetch(url, method, { name, price });
+      const json = await res.json();
+      if (res.ok) {
+        showToast(isEdit ? 'Product updated!' : 'Product created!', 'success');
+        closeProductModal();
+        loadProducts();
+      } else {
+        showToast(json.message || 'Operation failed.', 'error');
+      }
+    } catch (e) {
+      showToast('Network error.', 'error');
+    }
+  }
+
+  /* ─── DELETE CONFIRM ─────────────────────────────────────────────────────── */
+  function confirmDelete(type, id, name) {
+    document.getElementById('confirm-msg').textContent = `Delete ${type} "${name}" (#${id})? This cannot be undone.`;
+    document.getElementById('confirm-overlay').classList.add('open');
+    document.getElementById('confirm-ok').onclick = () => doDelete(type, id);
+  }
+
+  function closeConfirm() { document.getElementById('confirm-overlay').classList.remove('open'); }
+
+  async function doDelete(type, id) {
+    closeConfirm();
+    const url = type === 'user' ? `/api/users/${id}` : `/api/products/${id}`;
+    try {
+      const res  = await apiFetch(url, 'DELETE');
+      const json = await res.json();
+      if (res.ok) {
+        showToast(`${type === 'user' ? 'User' : 'Product'} deleted.`, 'success');
+        type === 'user' ? loadUsers() : loadProducts();
+      } else {
+        showToast(json.message || 'Delete failed.', 'error');
+      }
+    } catch (e) {
+      showToast('Network error.', 'error');
+    }
+  }
+
+  /* ─── HELPERS ────────────────────────────────────────────────────────────── */
+  function apiFetch(url, method = 'GET', body = null) {
+    const opts = {
+      method,
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` }
+    };
+    if (body) opts.body = JSON.stringify(body);
+    return fetch(`${API}${url}`, opts);
+  }
+
+  function showToast(msg, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<span class="toast-icon">${type === 'success' ? '✅' : '❌'}</span>${msg}`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function errRow(cols, msg) {
+    return `<tr><td colspan="${cols}"><div class="empty-state"><div class="icon">⚠️</div><p>${esc(msg)}</p></div></td></tr>`;
+  }
+
+  /* close modals on overlay click */
+  document.getElementById('user-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeUserModal();
+  });
+  document.getElementById('product-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeProductModal();
+  });
+  document.getElementById('confirm-overlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeConfirm();
+  });
+</script>
+</body>
+</html>
